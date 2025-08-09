@@ -18,7 +18,7 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const { email, password } = formData;
@@ -26,6 +26,20 @@ const Login = () => {
     if (!email || !password) {
       setError('Both fields are required');
       return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:4000/api/login', formData);
+      if (response.data.success) {
+        // Save token or user info if needed
+        localStorage.setItem('token', response.data.token);
+        navigate('/'); // Redirect to index page
+      } else {
+        setError('Invalid credentials');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Login failed. Please try again.');
     }
 
     // Replace this with your backend or Firebase logic
