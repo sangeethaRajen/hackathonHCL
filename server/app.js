@@ -1,22 +1,32 @@
 let express = require('express');
 let jwt = require('jsonwebtoken');
 let bcrypt = require('bcryptjs');
-const mongoose = require('mongoose');
 const dbCon = require('./db');
 const cors = require('cors');
+const path = require('path');
+
+
 
 let SECRET_KEY = "scwecwecwecew";
 
 const app = express();
-app.use(cors());
+const corsOptions = {
+  origin: 'http://localhost:5173', // your frontend origin
+  credentials: true,               // allow cookies/auth headers
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 app.get('/', (req, res) => {
-    res.send('Hello World')
+   res.send('Hello World');
 })
 
 function authenticateToken(req, res, next) {
-    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+    console.log(req.cookies);
+    const token = (req.cookies && req.cookies.token) || req.headers.authorization?.split(' ')[1];
     console.log("------",token);
     if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
 
@@ -57,7 +67,7 @@ app.post('/login',  async (req, res) => {
     //const user = users.find(u => u.username === username);
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const isValid = await bcrypt.compare(password, user[0].password);
+    const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign({ email }, SECRET_KEY, { expiresIn: '1h' });
@@ -65,12 +75,12 @@ app.post('/login',  async (req, res) => {
     res.json({ token });
 
 })
-app.get('/products', async (req, res) => {
+app.get('/products',authenticateToken, async (req, res) => {
     let prds = await dbCon.getAllProducts();
     console.log(prds);
     return res.status(201).json(prds);
 })
-app.post('/product', (req, res) => {
+app.post('/product',authenticateToken, (req, res) => {
     let body = req.body;
     dbCon.putProduct(body)
         .then((response)=>{
@@ -80,19 +90,6 @@ app.post('/product', (req, res) => {
         .catch(err => console.error('Error adding product:', err));
 })
 
-function db() {
-    const dbURI = 'mongodb://localhost:27017/hcl';
 
-    mongoose.connect(dbURI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    })
-        .then(() => {
-            console.log('Connected to MongoDB!');
-        })
-        .catch((err) => {
-            console.error('Error connecting to MongoDB:', err);
-        });
-}
 
 app.listen(3000, () => console.log("Server listing on port 3000"));

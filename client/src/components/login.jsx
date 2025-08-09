@@ -18,7 +18,7 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const { email, password } = formData;
@@ -26,6 +26,29 @@ const Login = () => {
     if (!email || !password) {
       setError('Both fields are required');
       return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3000/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    });
+     let res = await response.json();
+     console.log(res);
+      if (res.token) {
+        // Save token or user info if needed
+       
+        localStorage.setItem('token', res.token);
+        navigate('/catalog'); // Redirect to index page
+      } else {
+        setError('Invalid credentials');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Login failed. Please try again.');
     }
 
     // Replace this with your backend or Firebase logic
@@ -110,7 +133,7 @@ const Login = () => {
 
         {error && <p style={styles.error}>{error}</p>}
 
-        <button type="submit" style={styles.button} onClick={handleLogin}>Login</button>
+        <button type="submit" style={styles.button} >Login</button>
 
       </form>
 

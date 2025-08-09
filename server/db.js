@@ -49,8 +49,20 @@ const putProduct = async (body)=>{
   return await prd.save();
 }
 
-const getAllProducts = async ()=>{  
-  return await Product.find();
+const getAllProducts = async (page=1, limit=10)=>{  
+  let count = await Product.countDocuments();
+  console.log(count);
+  const posts = await Product.find()
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+   return {
+      totalItems: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      posts
+    };
+  //return await Product.find();
 }
 
 

@@ -13,7 +13,7 @@ const Signup = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const { email, password, confirmPassword } = formData;
@@ -26,6 +26,20 @@ const Signup = () => {
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:4000/api/login', formData);
+      if (response.data.success) {
+        // Save token or user info if needed
+        localStorage.setItem('token', response.data.token);
+        navigate('/'); // Redirect to index page
+      } else {
+        setError('Invalid credentials');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Login failed. Please try again.');
     }
 
     console.log('Signup successful:', { email, password });
